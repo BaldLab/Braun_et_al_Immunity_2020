@@ -1,0 +1,848 @@
+---
+title: "TUMOR CD155 DRIVES RESISTANCE TO IMMUNOTHERAPY BY
+DOWNREGULATING THE ACTIVATING RECEPTOR CD226 IN CD8+ T CELLS"
+author: "Dillon Corvino"
+date: "30/08/2019"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: united
+    highlight: tango
+    df_print: paged
+    code_folding: hide
+editor_options: 
+  chunk_output_type: console
+---
+
+Built with R version `r getRversion()`
+
+## Setup {.tabset}
+
+### Environment
+```{r Environment_setup, message = FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  eval = TRUE, 
+  tidy = TRUE
+)
+
+# Environment Set up
+rm(list = ls()) #Clean workspace
+cat("\014")     #Clean Console
+gc() # Free memory
+
+###################
+# Install packages
+###################
+
+pkgs <- c("remedy", "Seurat", "dplyr", 
+          "rstudioapi", "cowplot", "ggplot2", 
+          "grid", "gridExtra", "styler", "stringr", "msigdbr")
+
+
+for(i in 1:length(pkgs)){
+  if(!require(pkgs[i], character.only = T)){
+    install.packages(pkgs[i])
+    require(pkgs[i], character.only = T)
+  }else{
+    require(pkgs[i], character.only = T)
+  }
+}
+
+pkgs <- c("gplots", "fgsea", "biomaRt",
+          "clusterProfiler", "GSEABase", "Bitr",
+          "org.Mm.eg.db")
+
+for(i in 1:length(pkgs)){
+  if(!require(pkgs[i], character.only = T)){
+    BiocManager::install(pkgs[i])
+    require(pkgs[i], character.only = T)
+  }else{
+    require(pkgs[i], character.only = T)
+  }
+}
+
+
+####################
+# Github packages
+####################
+
+# "EnhancedVolcano" package from Github repo
+# devtools::install_github('kevinblighe/EnhancedVolcano')
+library(EnhancedVolcano)
+
+# Colour scheme
+heatmap.blue.col <- "#2B4FA2"
+heatmap.red.col <- "#ED1C24"
+white.col <- "#FFFFFF"
+
+DNAM1.neg.col <- "#FF0000" # Red 
+DNAM1.dim.col <- "#A0A0A4" # Grey
+DNAM1.high.col <- "#0000C0" # Blue
+col.scheme <- c(DNAM1.neg.col, DNAM1.dim.col, DNAM1.high.col)
+
+# Set working directory to source file location
+setwd(dirname(getActiveDocumentContext()$path))
+working.dir <- getwd()
+
+
+# create output directories
+if(!dir.exists("output")){dir.create("output", recursive = T)}
+if(!dir.exists("output/figures")){dir.create("output/figures", recursive = T)}
+if(!dir.exists("output/tables")){dir.create("output/tables", recursive = T)}
+if(!dir.exists("output/QC")){dir.create("output/QC", recursive = T)}
+
+```
+
+### Reading data
+```{r reading_data}
+
+# Load dataset
+DNAM1.data <- Read10X(data.dir = "Input_data/10X/")
+
+# Initialize the Seurat object with the raw (non-normalized data).  
+# Keep all genes expressed in >= 3 cells. 
+# Keep all cells with at least 200 detected genes
+seurat.object <- CreateSeuratObject(
+  counts = DNAM1.data$`Gene Expression`,
+  min.cells = 3,
+  min.features = 200
+)
+
+seurat.object # 13,172 genes and 1,907 cells
+
+```
+
+
+## QC and Data filtering {.tabset}
+
+### QC & Normalisation
+```{r QC_and_normalisation}
+
+#  Get mitochondria genes and calculate percentage of genes
+mito.genes <- grep(pattern = "^mt-", 
+                   x = rownames(x = seurat.object@assays$RNA@data), 
+                   value = TRUE)
+mito.genes
+
+percent.mito <- Matrix::colSums(seurat.object@assays$RNA@data[mito.genes, ]) / Matrix::colSums(seurat.object@assays$RNA@data)
+
+seurat.object <- AddMetaData(object = seurat.object, 
+                             metadata = percent.mito, 
+                             col.name = "percent.mito")
+
+
+# Visualise mitochondria percentage
+VlnPlot(object = seurat.object, 
+        features = c("nFeature_RNA", "nCount_RNA", "percent.mito"))
+
+dev.copy(pdf, "output/QC/QC_nFeature_nCount_RNA_percentMito.pdf")
+dev.off()
+
+head(seurat.object@meta.data)
+str(seurat.object@meta.data)
+
+###################
+#  Filter cells
+###################
+
+# Remove cells with < 200 genes, and remove cells with > 0.05% mitochondrial genes
+
+seurat.object.filt <- subset(seurat.object, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mito < 0.05)
+
+seurat.object.filt #13,172 genes and 1,526 cells remain
+
+
+# Vis filtering
+
+# Before filtering
+VlnPlot(object = seurat.object, 
+        features = c("nFeature_RNA", "nCount_RNA", "percent.mito"))
+
+# After filtering
+VlnPlot(object = seurat.object.filt, 
+        features = c("nFeature_RNA", "nCount_RNA", "percent.mito"))
+
+dev.copy(pdf, "output/QC/QC_nFeature_nCount_RNA_percentMito_Post_filtering.pdf")
+dev.off()
+
+
+seurat.object # 13,172 genes across 1,907 cells
+seurat.object.filt # 13,172 genes across 1,526 cells
+
+# Therefore 381 cells were removed
+
+
+# Normalise RNA data by logNormalize
+seurat.object.filt <- NormalizeData(object = seurat.object.filt,
+                                    normalization.method = "LogNormalize",
+                                    scale.factor = 10000,
+                                    verbose = TRUE)
+
+
+# Find variable genes
+seurat.object.filt <- FindVariableFeatures(object = seurat.object.filt,
+                                           verbose = TRUE)
+
+# Scale and regress variables
+seurat.object.filt <- ScaleData(object = seurat.object.filt,
+                                features = rownames(seurat.object.filt),
+                                vars.to.regress = c("nCount_RNA", "percent.mito"),
+                                model.use = "linear",
+                                block.size = 2000, 
+                                do.scale = TRUE,
+                                do.center = TRUE,
+                                verbose = TRUE)
+
+```
+
+### Dimension reduction 
+```{r dim_reduction}
+
+# Run PCA
+seurat.object.filt <- RunPCA(seurat.object.filt, 
+                             verbose = FALSE)
+
+ElbowPlot(seurat.object.filt, 
+          ndims = 50)
+
+dev.copy(pdf, "output/figures/PC_elbowplot.pdf")
+dev.off()
+
+# elbow @ ~20
+
+PCAPlot(seurat.object.filt,
+        dims = c(1, 2)) + 
+  NoLegend()
+
+dev.copy(pdf, "output/figures/PCA_dims1_2.pdf")
+dev.off()
+
+seurat.object.filt <- FindNeighbors(seurat.object.filt,
+                                    dims = 1:20)
+
+seurat.object.filt <- FindClusters(seurat.object.filt,
+                                   resolution = 0.1) 
+
+
+##########
+# tSNE
+##########
+
+# tSNE perplex picked based on looped running of RunTSNE at differing values
+
+seurat.object.filt <- RunTSNE(seurat.object.filt,
+                              reduction = "pca",
+                              dims = 1:20,
+                              perplexity = 30,
+                              method = "FIt-SNE",
+                              seed.use = 42,
+                              dim.embed = 2)
+
+DimPlot(seurat.object.filt,
+        reduction = "tsne") + 
+  ggtitle(paste0("Perplexity set at ", 30))
+
+dev.copy(pdf, "output/figures/tSNE_all_cells_res01_clusts.pdf")
+dev.off()
+
+#########
+# UMAP
+#########
+
+# UMAP min.dist and n.neighbors values were picked based on looped running of RunUMAP across a range of values
+
+seurat.object.filt <- RunUMAP(object = seurat.object.filt,
+                              reduction = "pca",
+                              dims = 1:20,
+                              umap.method = "uwot",
+                              n.neighbors = 20, 
+                              min.dist = 0.5,
+                              seed.use = 42)
+
+DimPlot(object = seurat.object.filt,
+        reduction = "umap",
+        label = TRUE) + 
+  ggtitle(paste0("UMAP Min dist = ", 0.5)) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+dev.copy(pdf, "output/figures/UMAP_all_cells_res01_clusts.pdf")
+dev.off()
+
+```
+
+### Adding ADT data and normalising/filtering
+```{r adding_ADT_data}
+
+##################################
+# ADD ADT data to seurat object
+##################################
+# Data needs to be transposed
+# Additionally, cells filtered during mRNA QC need to be removed
+
+ADT.data <- as.matrix(DNAM1.data$`Antibody Capture`)
+
+dim(ADT.data)
+length(rownames(seurat.object.filt@meta.data))
+
+# Determine which cells remain in seurat dataset and keep only these from ADT dataset
+cell.ids.keep <- rownames(seurat.object.filt@meta.data)
+keep.logic <- colnames(ADT.data) %in% cell.ids.keep
+ADT.data <- ADT.data[, keep.logic]
+ADT.data <- t(as.matrix(ADT.data))
+rownames(ADT.data) <- "DNAM1"
+
+# Add ADT data to seurat object
+seurat.object.filt[["ADT"]] <- CreateAssayObject(counts = ADT.data)
+seurat.object.filt
+
+# ADT Normalisation
+seurat.object.filt <- NormalizeData(seurat.object.filt,
+                                    assay = "ADT",
+                                    normalization.method = "CLR")
+# ADT scaling
+seurat.object.filt <- ScaleData(seurat.object.filt,
+                                assay = "ADT")
+
+```
+
+### Subset data by ADT_Cd226 expression
+```{r subsetting_by_25_50_25}
+
+###############################################
+# Subset cells based on Cd226/DNAM1 ADT expression
+###############################################
+
+# Cells are subsetted by ADT (Cd226/DNAM1) expression into Neg, Dim, High populations 
+# DNAM1 Neg = ~25% of cells with the lowest expression
+# DNAM1 Dim = next ~50% of cells
+# DNAM1 High = top ~25% of cells with highest expression 
+
+
+seurat.object.filt # 1,526 samples/cells
+
+
+# Get quantile cutoff values
+q.vals <- quantile(t(as.matrix(seurat.object.filt@assays$ADT@data)), probs = c(0.25, 0.75))
+print(q.vals)
+
+# Check number of cells in each subset
+sum(seurat.object.filt@assays$ADT@data <= q.vals[1]) # 384
+sum(seurat.object.filt@assays$ADT@data > q.vals[1] & seurat.object.filt@assays$ADT@data < q.vals[2]) # 756
+sum(seurat.object.filt@assays$ADT@data >= q.vals[2]) # 386
+
+# Get logical variables of which cells fit in each subset
+logic.var.neg <- seurat.object.filt@assays$ADT@data <= q.vals[1]
+logic.var.dim <- seurat.object.filt@assays$ADT@data > q.vals[1] & seurat.object.filt@assays$ADT@data < q.vals[2]
+logic.var.high <- seurat.object.filt@assays$ADT@data >= q.vals[2]
+
+# Get cell IDs for each subset
+DNAM.neg <- colnames(seurat.object.filt@assays$ADT@data)[logic.var.neg]
+DNAM.dim <- colnames(seurat.object.filt@assays$ADT@data)[logic.var.dim]
+DNAM.high <- colnames(seurat.object.filt@assays$ADT@data)[logic.var.high]
+
+# Create a vector with new subset annotations
+cell.ids <- rownames(seurat.object.filt@meta.data)
+neg.logic <- cell.ids %in% DNAM.neg
+dim.logic <- cell.ids %in% DNAM.dim
+high.logic <- cell.ids %in% DNAM.high
+
+DNAM.clust <- cell.ids
+DNAM.clust[neg.logic] <- "Neg"
+DNAM.clust[dim.logic] <- "Dim"
+DNAM.clust[high.logic] <- "High"
+DNAM.clust
+
+# Add ADT clust info to metadata
+seurat.object.filt <- AddMetaData(object = seurat.object.filt, 
+                                  metadata = DNAM.clust, 
+                                  col.name = "DNAM.clust.quantile")
+
+head(seurat.object.filt@meta.data)
+
+# Replace ident slot with DNAM clust info
+clust.ident <- as.factor(seurat.object.filt@meta.data$DNAM.clust.quantile)
+clust.ident
+
+seurat.object.filt <- SetIdent(seurat.object.filt, 
+                               value = clust.ident)
+
+head(seurat.object.filt@active.ident)
+
+# Give Active ident and metadata columns factorisation with correct ordering 
+levels(seurat.object.filt@active.ident)
+
+seurat.object.filt@active.ident <- factor(seurat.object.filt@active.ident, 
+                                          levels = c("Neg", "Dim", "High"))
+
+levels(seurat.object.filt@active.ident)
+
+
+levels(seurat.object.filt@meta.data$DNAM.clust.quantile)
+seurat.object.filt@meta.data$DNAM.clust.quantile <- factor(seurat.object.filt@meta.data$DNAM.clust.quantile, 
+                                                           levels = c("Neg", "Dim", "High"))
+
+levels(seurat.object.filt@meta.data$DNAM.clust.quantile)
+
+```
+
+### ADT cluster # and %
+```{r export_cluster_cell_info}
+
+table(seurat.object.filt@meta.data$DNAM.clust)
+prop.table(table(seurat.object.filt@meta.data$DNAM.clust))*100
+
+```
+
+### Visualising ADT subsets
+```{r visualising_ADT_subsets}
+
+# Create output directory
+if(!dir.exists("output/figures/ADT_subsetting")){dir.create("output/figures/ADT_subsetting", recursive = T)}
+
+# Quick QC
+VlnPlot(object = seurat.object.filt,
+        features = c("nFeature_RNA", "nCount_RNA", "percent.mito"))
+
+dev.copy(pdf, "output/QC/QC_nFeature_nCount_RNA_percentMito_Post_filtering_DNAM1_ADT_subsets.pdf")
+dev.off()
+
+
+# Overall ADT detection
+# Using custom x axis
+
+RidgePlot(seurat.object.filt,
+          "adt_DNAM1",
+          group.by = "orig.ident",
+          log = TRUE,
+          sort = FALSE,
+          cols = col.scheme) + 
+  ggplot2::coord_cartesian(xlim=c(0.9, 4)) 
+
+dev.copy(pdf, "output/figures/ADT_subsetting/Ridgeplot_adt_DNAM1_total_log_cust_xaxis.pdf")
+dev.off()
+
+
+# Vis ADT clustering on VlnPlot
+VlnPlot(seurat.object.filt, 
+        "adt_DNAM1", 
+        group.by = "DNAM.clust.quantile", 
+        sort = FALSE, 
+        cols = col.scheme)
+
+dev.copy(pdf, "output/figures/ADT_subsetting/Vlnplot_adt_DNAM1_groups_quantile.pdf")
+dev.off()
+
+# Vis ADT clustering on RidgePlot
+RidgePlot(seurat.object.filt,
+          "adt_DNAM1",
+          group.by = "DNAM.clust.quantile",
+          sort = FALSE, 
+          cols = col.scheme)
+
+dev.copy(pdf, "output/figures/ADT_subsetting/Ridgeplot_adt_DNAM1_groups_quantile.pdf")
+dev.off()
+
+# Visualise Cd226 gene expression
+
+VlnPlot(seurat.object.filt,
+        "Cd226",
+        group.by = "DNAM.clust.quantile",
+        sort = FALSE,
+        cols = col.scheme)
+
+dev.copy(pdf, "output/figures/ADT_subsetting/Vlnplot_adt_DNAM1_groups_Cd226_expression_quantile.pdf")
+dev.off()
+
+
+RidgePlot(seurat.object.filt,
+          "Cd226",
+          group.by = "DNAM.clust.quantile",
+          sort = FALSE,
+          cols = col.scheme)
+
+dev.copy(pdf, "output/figures/ADT_subsetting/Ridgeplot_adt_DNAM1_groups_Cd226_expression_quantile.pdf")
+dev.off()
+
+```
+
+## Differential gene expression {.tabset}
+
+### Calculating DEGs
+```{r DEG_analysis}
+
+# DEG of High vs. Neg ADT subsets
+DNAMhigh.vs.neg.markers.wilcox <- FindMarkers(seurat.object.filt,
+                                              ident.1 = "High",
+                                              ident.2 = "Neg",
+                                              logfc.threshold = 0.25,
+                                              min.pct = 0.1,
+                                              test.use = "wilcox", 
+                                              only.pos = FALSE)
+
+write.csv(DNAMhigh.vs.neg.markers.wilcox, "output/tables/DNAMhigh_vs_neg_markers_wilcox.csv")
+print(paste0("Number of sig differentially expressed genes = ", sum(DNAMhigh.vs.neg.markers.wilcox$p_val_adj < 0.05)))
+
+# Do diff gene expression with no threshold or filtering
+DNAMhigh.vs.Neg.markers.wilcox.NO.FILT <- FindMarkers(seurat.object.filt,
+                                                      ident.1 = "High",
+                                                      ident.2 = "Neg",
+                                                      logfc.threshold = 0,
+                                                      min.pct = 0,
+                                                      test.use = "wilcox", 
+                                                      only.pos = FALSE)
+
+write.csv(DNAMhigh.vs.Neg.markers.wilcox.NO.FILT, "output/tables/DNAMhigh_vs_Neg_markers_wilcox_ALL_genes_NO_filt.csv")
+print(paste0("Number of sig differentially expressed genes = ", sum(DNAMhigh.vs.Neg.markers.wilcox.NO.FILT$p_val_adj < 0.05)))
+```
+
+### Write data to file
+```{r write_data, eval = FALSE}
+
+save.data.frame.function <- function(df, title){
+  
+  x <- as.data.frame(as.matrix(df))
+  
+  write.table(x, 
+              paste0("output/tables/", title, ".txt"),
+              sep = "\t",
+              quote = FALSE)
+}
+
+# RNA dataset
+# Write raw data
+save.data.frame.function(seurat.object.filt@assays$RNA@counts, "Raw_dataframe_RNA")
+
+# write filtered data
+save.data.frame.function(seurat.object.filt@assays$RNA@data, "filtered_dataframe_RNA")
+
+# Write metadata
+save.data.frame.function(seurat.object.filt@meta.data, "Meta_data_dataframe")
+
+# ADT dataset
+# Write raw data
+save.data.frame.function(seurat.object.filt@assays$ADT@counts, "Raw_dataframe_ADT")
+
+# write filtered data
+save.data.frame.function(seurat.object.filt@assays$ADT@data, "filtered_dataframe_ADT")
+
+
+
+```
+
+## Visualisation {.tabset}
+
+### Volcano DEGs
+```{r Volcano_plots}
+
+if(!dir.exists("output/figures/VolcanoPlots")){
+  dir.create("output/figures/VolcanoPlots", 
+             recursive = TRUE)}
+
+#############
+# Function
+#############
+
+clean.data <- function(x){
+  
+  # data = data.frame with cols (genes, PValue/FDR, logFC)
+  
+  colnames(x) <- c("PValue", "logFC", "pct.1", "pct.2", "FDR")
+  colnames(x) 
+  x$genes <- rownames(x)
+  head(x)
+  return(x)
+  
+}
+
+
+
+# Format data
+volcano.data <- clean.data(DNAMhigh.vs.Neg.markers.wilcox.NO.FILT)
+
+
+
+# Create colour key for logFC and FDR sig value of interest
+FDR.cutoff <- 0.05
+logFC.cutoff <- 0.25
+
+# Establish custom colour key for increased vs. decreased genes         
+# set the base colour as 'black'
+keyvals <- rep('grey50', nrow(volcano.data))
+
+# set the base name/label as 'NS'
+names(keyvals) <- rep('NS', nrow(volcano.data))
+
+# modify keyvals for variables with fold change > 0.25 & FDR < 0.05
+keyvals[which(volcano.data$logFC > logFC.cutoff & volcano.data$FDR < FDR.cutoff)] <- DNAM1.high.col
+names(keyvals)[which(volcano.data$logFC > logFC.cutoff & volcano.data$FDR < FDR.cutoff)] <- 'High'
+
+# modify keyvals for variables with fold change < -0.25 & FDR < 0.05
+keyvals[which(volcano.data$logFC < -logFC.cutoff & volcano.data$FDR < FDR.cutoff)] <- DNAM1.neg.col
+names(keyvals)[which(volcano.data$logFC < -logFC.cutoff & volcano.data$FDR < FDR.cutoff)] <- 'Neg'
+
+unique(names(keyvals))
+
+
+# Plot Volcano with top 10 DEGs and custom GOI
+
+# top 10 up and down DEGs
+sig.genes <- volcano.data[volcano.data$FDR < 0.05, ]
+
+goi.top <- top_n(sig.genes, 10, logFC)
+goi.bottom <- top_n(sig.genes, -10, logFC)
+
+# Hand picked GOIs
+curated.goi <- c("Cd226", "Eomes", "Rora", 
+                 "Ifng", "Cd69", "Gzma", 
+                 "Gzmb", "Cd48", "Gzmk", 
+                 "Icam1", "Crtam", "Lag3", 
+                 "Tnfrsf9", "Cd247")
+curated.goi
+
+
+goi <- unique(c(goi.top$genes, goi.bottom$genes, curated.goi))
+
+# Plot highly customised Volcano         
+EnhancedVolcano(volcano.data,
+                lab = rownames(volcano.data),
+                x = 'logFC',
+                y = 'FDR',
+                selectLab = goi,
+                xlim = c(-1.5, 2.6),
+                ylim = c(0, 80),
+                title = "DNAM1 High vs. Neg",
+                subtitle = "",
+                ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                pCutoff = 0.05,
+                FCcutoff = 0.25,
+                pointSize = 5, 
+                #col = c("black", "black", "black", "red2"),
+                colCustom = keyvals,
+                colAlpha = 0.2, 
+                drawConnectors = TRUE,
+                widthConnectors = 0.5,
+                colConnectors = 'grey30',
+                typeConnectors = "open",
+                labSize = 4,
+                gridlines.major = TRUE,
+                gridlines.minor = FALSE,
+                border = 'partial',
+                borderWidth = 0.5,
+                borderColour = 'black')   
+
+dev.copy(pdf, "output/figures/VolcanoPlots/Volcano_DNAM1_High_vs_Neg_top_10up_and_10down_Plus_curatedGOI.pdf")
+dev.off()
+
+# Please note 
+# A number of genes were removed as part of figure generation. 
+# Namely, AA467197, Gm12840, Slc17a6
+# These were removed as they were deemed uninformative.
+
+```
+
+
+### Heatmaps
+```{r Heatmaps}
+
+# Create output directory 
+if(!dir.exists("output/figures/heatmaps")){
+  dir.create("output/figures/heatmaps", 
+             recursive = T)}
+
+# Subset dataset for easier plotting
+seurat.object.filt.small <- subset(seurat.object.filt, 
+                                   downsample = 300)
+
+
+
+# Top 20 Up- and down-regulated genes in High Vs. Neg comparison
+
+sig.genes <- DNAMhigh.vs.neg.markers.wilcox[DNAMhigh.vs.neg.markers.wilcox$p_val_adj < 0.05, ]
+
+sig.genes$GeneID <- rownames(sig.genes)
+
+up.genes <- top_n(sig.genes, 20, avg_logFC)$GeneID
+down.genes <- top_n(sig.genes, -20, avg_logFC)$GeneID
+
+plot.genes <- c(up.genes, down.genes)
+
+# Plot heatmap
+DoHeatmap(seurat.object.filt.small, 
+          features = unique(plot.genes),
+          assay = "RNA",
+          group.colors = col.scheme, 
+          angle = 90,
+          raster = FALSE)
+
+dev.copy(pdf, "output/figures/heatmaps/DEGs_top20UP_DN.pdf")
+dev.off()
+
+```
+
+
+## GSEA {.tabset}
+
+### Convert Symbol to EntrezID
+```{r Getting_entrezIDs}
+
+# Using Bitr package
+keytypes(org.Mm.eg.db)
+
+Entrez.ids <- bitr(rownames(DNAMhigh.vs.Neg.markers.wilcox.NO.FILT), 
+                   fromType = "SYMBOL", 
+                   toType = "ENTREZID", 
+                   OrgDb = "org.Mm.eg.db")
+
+# 6.54% failed to map
+
+# Merge dataset with pval and fold change info
+GSEA.dataframe <- merge(Entrez.ids, 
+                        DNAMhigh.vs.Neg.markers.wilcox.NO.FILT, 
+                        by.x = "SYMBOL", 
+                        by.y = "row.names")
+
+dim(GSEA.dataframe) # 12,127 genes 
+
+```
+
+### msigDB
+```{r msigDatabase}
+
+# Analysis using msig database
+
+# Msig Database gene sets:
+#H: hallmark gene sets
+#C1: positional gene sets
+#C2: curated gene sets
+#C3: motif gene sets
+#C4: computational gene sets
+#C5: GO gene sets
+#C6: oncogenic signatures
+#C7: immunologic signatures
+
+
+# Isolate just the differentially expressed genes
+sig.genes <- GSEA.dataframe[GSEA.dataframe$p_val_adj < 0.05, ]
+
+dim(sig.genes) # 869 genes
+
+# Subset by upregulated or downregulated genes
+up.sig.genes <- sig.genes[sig.genes$avg_logFC > 0, ]
+dim(up.sig.genes) # 753 genes
+
+# Set variables
+cat.val <- "C5"
+pval.cut.val <- 0.05 
+qval.cut.val <- 0.2 
+
+# Formatting database
+m_t2g <- msigdbr(species = "Mus musculus", 
+                 category = paste0(cat.val)) %>% 
+  dplyr::select(gs_name, entrez_gene)
+
+
+# upregulated
+e.up <- enricher(up.sig.genes$ENTREZID,
+                 TERM2GENE = m_t2g, 
+                 pvalueCutoff = pval.cut.val, 
+                 qvalueCutoff = qval.cut.val)
+
+e.up <- setReadable(e.up, 
+                    org.Mm.eg.db, 
+                    keyType = "ENTREZID")
+
+print(head(e.up))
+
+# Visualisation of enrichment
+print(barplot(e.up, 
+              showCategory = 10, 
+              font.size = 7) + 
+        ggtitle(paste0("Upregulated genes msigDB ", cat.val[i], " enrichment")))
+
+dev.copy(pdf, 
+         paste0("output/figures/GSEA/MsigDB_", cat.val[i], "_enrichment_barplot_Upregulated.pdf"))
+dev.off()
+
+# write files to disk
+write.csv(e.up@result, paste0("output/tables/GSEA/MsigDB_", cat.val[i], "_enrich_upreg.csv"))
+
+
+```
+
+## Imputation {.tabset}
+
+### Imputation calculation
+```{r seurat_imputation}
+
+# Impute gene expression 
+imputed.seurat <- RunALRA(seurat.object.filt, 
+                          genes.use = rownames(seurat.object.filt))
+
+# The matrix went from 20.75% nonzero to 42.98% nonzero
+
+
+```
+
+## Imputed data visualisation {.tabset}
+
+### mRNA vs Protein scatter plots
+```{r mRNA_vs_Protein_scatterplots}
+
+if(!dir.exists("output/figures/scatterplot")){dir.create("output/figures/scatterplot", recursive = T)}
+
+
+# Pearson correlation between the two features is displayed above the plot.
+
+FeatureScatter(imputed.seurat,
+               "Cd226","adt_DNAM1", 
+               cols = col.scheme)
+
+dev.copy(pdf, "output/figures/scatterplot/Cd226_vs_DNAM1_Imputed.pdf")
+dev.off()
+
+
+
+```
+
+### VlnPlots
+```{r VlnPlot}
+
+if(!dir.exists("output/figures/VlnPlots_manuscript")){dir.create("output/figures/VlnPlots_manuscript", recursive = T)}
+
+
+Genes.to.plot <- c("Cd69", "Cd226", "Crtam", "Cd27", "Cd28",
+                   "Tnfrsf4", "Tnfrsf9", "Furin", "Il2ra", "Il12rb2",
+                   "Il7r", "Ccr7", "Cd44", "Mki67", "Cd2",
+                   "Ifng", "Nkg7", "Klrg1", "Slamf1", "Slamf7",
+                   "Klrc1", "S1pr1", "Fasl", "Fas", "Cx3cr1",
+                   "Ctsw", "Cd96", "Entpd1", "Pdcd1", "Adora2a",
+                   "Lag3", "Tgfb1", "Havcr2", "Ctla4", "Cd160",
+                   "Cd274", "Tigit", "Ikzf1", "Ikzf2", "Ikzf3",
+                   "Tox", "Eomes", "Tbx21", "Id2", "Gata3",
+                   "Irf4", "Irf8", "Rora", "Klf2", "Klf3", 
+                   "Bach2", "Zeb2", "Myb", "Tcf7", "Itgb2",
+                   "Cdc42", "Itgal", "Itgax", "Itgb1", "Cd48",
+                   "Tln1", "Rap1a", "Rap1b", "Rassf5", "Rac2", 
+                   "Ccl5", "Ccl4", "Xcl1", "Il16", "Csf1",
+                   "Gzma", "Gzmb", "Gzmk")
+
+for(i in 1:length(Genes.to.plot)){
+  
+  print(VlnPlot(imputed.seurat, 
+                paste0(Genes.to.plot[i]),
+                cols = col.scheme, 
+                #ncol = 3,
+                pt.size = 0))
+  dev.copy(pdf, paste0("output/figures/VlnPlots_manuscript/VlnPlot_", Genes.to.plot[i], ".pdf"))
+  dev.off()
+  
+}
+
+
+```
+
