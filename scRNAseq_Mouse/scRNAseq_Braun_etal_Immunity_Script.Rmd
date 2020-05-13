@@ -1,6 +1,5 @@
 ---
-title: "TUMOR CD155 DRIVES RESISTANCE TO IMMUNOTHERAPY BY
-DOWNREGULATING THE ACTIVATING RECEPTOR CD226 IN CD8+ T CELLS"
+title: "TUMOR CD155 DRIVES RESISTANCE TO IMMUNOTHERAPY BY DOWNREGULATING THE ACTIVATING RECEPTOR CD226 IN CD8+ T CELLS"
 author: "Dillon Corvino"
 date: "30/08/2019"
 output:
@@ -31,17 +30,18 @@ knitr::opts_chunk$set(
 )
 
 # Environment Set up
-rm(list = ls()) #Clean workspace
-cat("\014")     #Clean Console
-gc() # Free memory
+#rm(list = ls()) #Clean workspace
+#cat("\014")     #Clean Console
+#gc() # Free memory
 
 ###################
 # Install packages
 ###################
 
-pkgs <- c("remedy", "Seurat", "dplyr", 
+pkgs <- c("remedy", "dplyr", 
           "rstudioapi", "cowplot", "ggplot2", 
-          "grid", "gridExtra", "styler", "stringr", "msigdbr")
+          "grid", "gridExtra", "styler", "stringr",
+          "msigdbr", "Seurat")
 
 
 for(i in 1:length(pkgs)){
@@ -54,7 +54,7 @@ for(i in 1:length(pkgs)){
 }
 
 pkgs <- c("gplots", "fgsea", "biomaRt",
-          "clusterProfiler", "GSEABase", "Bitr",
+          "clusterProfiler", "GSEABase", "clusterProfiler",
           "org.Mm.eg.db")
 
 for(i in 1:length(pkgs)){
@@ -113,7 +113,7 @@ seurat.object <- CreateSeuratObject(
   min.features = 200
 )
 
-seurat.object # 13,172 genes and 1,907 cells
+seurat.object
 
 ```
 
@@ -154,8 +154,7 @@ str(seurat.object@meta.data)
 
 seurat.object.filt <- subset(seurat.object, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mito < 0.05)
 
-seurat.object.filt #13,172 genes and 1,526 cells remain
-
+seurat.object.filt 
 
 # Vis filtering
 
@@ -171,8 +170,8 @@ dev.copy(pdf, "output/QC/QC_nFeature_nCount_RNA_percentMito_Post_filtering.pdf")
 dev.off()
 
 
-seurat.object # 13,172 genes across 1,907 cells
-seurat.object.filt # 13,172 genes across 1,526 cells
+seurat.object 
+seurat.object.filt
 
 # Therefore 381 cells were removed
 
@@ -197,81 +196,6 @@ seurat.object.filt <- ScaleData(object = seurat.object.filt,
                                 do.scale = TRUE,
                                 do.center = TRUE,
                                 verbose = TRUE)
-
-```
-
-### Dimension reduction 
-```{r dim_reduction}
-
-# Run PCA
-seurat.object.filt <- RunPCA(seurat.object.filt, 
-                             verbose = FALSE)
-
-ElbowPlot(seurat.object.filt, 
-          ndims = 50)
-
-dev.copy(pdf, "output/figures/PC_elbowplot.pdf")
-dev.off()
-
-# elbow @ ~20
-
-PCAPlot(seurat.object.filt,
-        dims = c(1, 2)) + 
-  NoLegend()
-
-dev.copy(pdf, "output/figures/PCA_dims1_2.pdf")
-dev.off()
-
-seurat.object.filt <- FindNeighbors(seurat.object.filt,
-                                    dims = 1:20)
-
-seurat.object.filt <- FindClusters(seurat.object.filt,
-                                   resolution = 0.1) 
-
-
-##########
-# tSNE
-##########
-
-# tSNE perplex picked based on looped running of RunTSNE at differing values
-
-seurat.object.filt <- RunTSNE(seurat.object.filt,
-                              reduction = "pca",
-                              dims = 1:20,
-                              perplexity = 30,
-                              method = "FIt-SNE",
-                              seed.use = 42,
-                              dim.embed = 2)
-
-DimPlot(seurat.object.filt,
-        reduction = "tsne") + 
-  ggtitle(paste0("Perplexity set at ", 30))
-
-dev.copy(pdf, "output/figures/tSNE_all_cells_res01_clusts.pdf")
-dev.off()
-
-#########
-# UMAP
-#########
-
-# UMAP min.dist and n.neighbors values were picked based on looped running of RunUMAP across a range of values
-
-seurat.object.filt <- RunUMAP(object = seurat.object.filt,
-                              reduction = "pca",
-                              dims = 1:20,
-                              umap.method = "uwot",
-                              n.neighbors = 20, 
-                              min.dist = 0.5,
-                              seed.use = 42)
-
-DimPlot(object = seurat.object.filt,
-        reduction = "umap",
-        label = TRUE) + 
-  ggtitle(paste0("UMAP Min dist = ", 0.5)) +
-  theme(plot.title = element_text(hjust = 0.5))
-
-dev.copy(pdf, "output/figures/UMAP_all_cells_res01_clusts.pdf")
-dev.off()
 
 ```
 
@@ -323,7 +247,7 @@ seurat.object.filt <- ScaleData(seurat.object.filt,
 # DNAM1 High = top ~25% of cells with highest expression 
 
 
-seurat.object.filt # 1,526 samples/cells
+seurat.object.filt
 
 
 # Get quantile cutoff values
@@ -645,7 +569,6 @@ dev.off()
 
 ```
 
-
 ### Heatmaps
 ```{r Heatmaps}
 
@@ -778,6 +701,9 @@ write.csv(e.up@result, paste0("output/tables/GSEA/MsigDB_", cat.val[i], "_enrich
 
 ### Imputation calculation
 ```{r seurat_imputation}
+
+# Please note that imputation will produce slightly different values upon each calculation. 
+# This will give slight variation in downstream results and plots
 
 # Impute gene expression 
 imputed.seurat <- RunALRA(seurat.object.filt, 
