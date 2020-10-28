@@ -1,0 +1,4 @@
+scRNAseq_Mouse/Data/10X filter=lfs diff=lfs merge=lfs -text
+scRNAseq_Mouse/Data/10X/barcodes.tsv filter=lfs diff=lfs merge=lfs -text
+scRNAseq_Mouse/Data/10X/genes.tsv filter=lfs diff=lfs merge=lfs -text
+scRNAseq_Mouse/Data/10X/matrix.mtx filter=lfs diff=lfs merge=lfs -text
