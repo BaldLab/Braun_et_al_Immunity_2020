@@ -1,6 +1,6 @@
 # CD155 on Tumor Cells Drives Resistance to Immunotherapy by Inducing the Degradation of the Activating Receptor CD226 on CD8+ T Cells
 
-## Matthias Braun, Amelia Roman Aguilera, Ashmitha Sundarrajan ... and Tobias Bald.
+### Matthias Braun, Amelia Roman Aguilera, Ashmitha Sundarrajan ... and Tobias Bald.
 
 ## Immunity
 
