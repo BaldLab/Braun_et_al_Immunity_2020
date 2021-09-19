@@ -8,4 +8,6 @@
 
 ### DOI: [https://doi.org/10.1016/j.immuni.2020.09.010](https://www.cell.com/immunity/fulltext/S1074-7613(20)30404-0)
 
+### To cite code/repo please use [![DOI](https://zenodo.org/badge/256487619.svg)](https://zenodo.org/badge/latestdoi/256487619)
+
 #### Majority of the code and analysis contained within this github repo was generated/performed by [Dillon Corvino](https://github.com/Eomesodermin)
