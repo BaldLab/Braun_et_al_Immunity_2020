@@ -6,7 +6,7 @@
 
 ## Authors & Affiliations
 
-**Matthias Braun**<sup>1,2</sup>, **Amelia Roman Aguilera**<sup>1,2,8</sup>, **Ashmitha Sundarrajan**<sup>2,8</sup>, **Dillon Corvino**<sup>2</sup>, **Kimberley Stannard**<sup>1,2</sup>, **Sophie Krumeich**<sup>2</sup>, **Indrajit Das**<sup>1</sup>, **Luize G. Lima**<sup>3</sup>, **Lizeth G. Meza Guzman**<sup>4,5</sup>, **Kunlun Li**<sup>4,5</sup>, **Rui Li**<sup>6,7</sup>, **Nazhifah Salim**<sup>2</sup>, **Maria Villancanas Jorge**<sup>2</sup>, **Sunyoung Ham**<sup>3</sup>, **Gabrielle Kelly**<sup>1</sup>, **Frank Vari**<sup>1</sup>, **Ailin Lepletier**<sup>1</sup>, **Ashwini Raghavendra**<sup>1</sup>, **Sally Pearson**<sup>1</sup>, **Jason Madore**<sup>1</sup>, **Sebastien Jacquelin**<sup>9</sup>, **Maike Effern**<sup>10,11</sup>, **Brodie Quine**<sup>1,2</sup>, **Lambros T. Koufariotis**<sup>1,2</sup>, **Mika Casey**<sup>1</sup>, **Kyohei Nakamura**<sup>1</sup>, **Eun Y. Seo**<sup>13</sup>, **Michael Hölzel**<sup>10</sup>, **Matthias Geyer**<sup>14</sup>, **Glen Kristiansen**<sup>15</sup>, **Touraj Taheri**<sup>16</sup>, **Elizabeth Ahern**<sup>1,17</sup>, **Brett G.M. Hughes**<sup>17</sup>, **James S. Wilmott**<sup>18,19</sup>, **Georgina V. Long**<sup>18,19,20,21</sup>, **Richard A. Scolyer**<sup>18,22</sup>, **Martin D. Batstone**<sup>17</sup>, **Jennifer Landsberg**<sup>23</sup>, **Dimo Dietrich**<sup>24</sup>, **Oltin T. Pop**<sup>25</sup>, **Lukas Flatz**<sup>25,26</sup>, **William C. Dougall**<sup>1</sup>, **André Veillette**<sup>6,7,8</sup>, **Sandra E. Nicholson**<sup>4,5</sup>, **Andreas Möller**<sup>3</sup>, **Robert J. Johnston**<sup>13</sup>, **Ludovic Martinet**<sup>27</sup>, **Mark J. Smyth**<sup>1,2,9</sup>, **Tobias Bald**<sup>2,9,30</sup>
+**Matthias Braun**<sup>1,2</sup>, **Amelia Roman Aguilera**<sup>1,28</sup>, **Ashmitha Sundarrajan**<sup>2,28</sup>, **Dillon Corvino**<sup>2</sup>, **Kimberley Stannard**<sup>1,2</sup>, **Sophie Krumeich**<sup>2</sup>, **Indrajit Das**<sup>1</sup>, **Luize G. Lima**<sup>3</sup>, **Lizeth G. Meza Guzman**<sup>4,5</sup>, **Kunlun Li**<sup>4,5</sup>, **Rui Li**<sup>6,7</sup>, **Nazhifah Salim**<sup>2</sup>, **Maria Villancanas Jorge**<sup>2</sup>, **Sunyoung Ham**<sup>3</sup>, **Gabrielle Kelly**<sup>1</sup>, **Frank Vari**<sup>1</sup>, **Ailin Lepletier**<sup>1</sup>, **Ashwini Raghavendra**<sup>1</sup>, **Sally Pearson**<sup>1</sup>, **Jason Madore**<sup>1</sup>, **Sebastien Jacquelin**<sup>9</sup>, **Maike Effern**<sup>10,11</sup>, **Brodie Quine**<sup>1,2</sup>, **Lambros T. Koufariotis**<sup>12</sup>, **Mika Casey**<sup>1</sup>, **Kyohei Nakamura**<sup>1</sup>, **Eun Y. Seo**<sup>13</sup>, **Michael Hölzel**<sup>10</sup>, **Matthias Geyer**<sup>14</sup>, **Glen Kristiansen**<sup>15</sup>, **Touraj Taheri**<sup>16</sup>, **Elizabeth Ahern**<sup>1,17</sup>, **Brett G.M. Hughes**<sup>17</sup>, **James S. Wilmott**<sup>18,19</sup>, **Georgina V. Long**<sup>18,19,20,21</sup>, **Richard A. Scolyer**<sup>18,22</sup>, **Martin D. Batstone**<sup>17</sup>, **Jennifer Landsberg**<sup>23</sup>, **Dimo Dietrich**<sup>24</sup>, **Oltin T. Pop**<sup>25</sup>, **Lukas Flatz**<sup>25,26</sup>, **William C. Dougall**<sup>1</sup>, **André Veillette**<sup>6,7,8</sup>, **Sandra E. Nicholson**<sup>4,5</sup>, **Andreas Möller**<sup>3</sup>, **Robert J. Johnston**<sup>13</sup>, **Ludovic Martinet**<sup>27</sup>, **Mark J. Smyth**<sup>1,29</sup>, **Tobias Bald**<sup>2,29,30</sup>
  
 
 ¹ Immunology in Cancer and Infection Laboratory, QIMR Berghofer Medical Research Institute, Herston, QLD, Australia  
@@ -37,13 +37,14 @@
 ²⁶ Department of Dermatology, Kantonsspital St.Gallen, St.Gallen, Switzerland  
 ²⁷ Institut National de la Santé et de la Recherche Médicale (INSERM) UMR 1037, Cancer Research Center of Toulouse (CRCT), Toulouse F-31000, France  
 
-\* Authors contributed equally  
-\# Lead contact  
+<sup>28</sup> Authors contributed equally  
+<sup>29</sup> Authors contributed equally  
+<sup>30</sup> Lead Contact
 
 ## Contact Information  
 
 **Correspondence:** [mark.smyth@qimrberghofer.edu.au](mailto:mark.smyth@qimrberghofer.edu.au), [tobias.bald@qimrberghofer.edu.au](mailto:tobias.bald@qimrberghofer.edu.au)  
-
+**Lead Contact*** [tobias.bald@qimrberghofer.edu.au](mailto:tobias.bald@qimrberghofer.edu.au)
 ---
 
 ## Abstract
