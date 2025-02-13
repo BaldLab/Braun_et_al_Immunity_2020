@@ -43,7 +43,8 @@
 ## Contact Information  
 
 **Correspondence:** [mark.smyth@qimrberghofer.edu.au](mailto:mark.smyth@qimrberghofer.edu.au), [tobias.bald@qimrberghofer.edu.au](mailto:tobias.bald@qimrberghofer.edu.au)  
-**Lead Contact*** [tobias.bald@qimrberghofer.edu.au](mailto:tobias.bald@qimrberghofer.edu.au)
+**Lead Contact:** [tobias.bald@qimrberghofer.edu.au](mailto:tobias.bald@qimrberghofer.edu.au)
+
 ---
 
 ## Abstract
