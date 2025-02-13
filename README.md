@@ -47,11 +47,7 @@
 
 ## Abstract
 
-The activating receptor CD226 is expressed on lymphocytes, monocytes, and platelets and promotes anti-tumor immunity in pre-clinical models. Here, we examined the role of CD226 in the function of tumor-infiltrating lymphocytes (TILs) and resistance to immunotherapy. In murine tumors, a large proportion of CD8+ TILs had decreased surface expression of CD226 and exhibited features of dysfunction, whereas CD226^hi^ TILs were highly functional. This correlation was seen also in TILs isolated from HNSCC patients.  
-
-Mutation of CD226 at tyrosine 319 (Y319) led to increased CD226 surface expression, enhanced anti-tumor immunity, and improved efficacy of immune checkpoint blockade (ICB). Mechanistically, tumor-derived CD155, the ligand for CD226, initiated phosphorylation of Y319 by Src kinases, thereby enabling ubiquitination of CD226 by CBL-B, internalization, and proteasomal degradation.  
-
-In pre-treatment samples from melanoma patients, CD226+CD8+ T cells correlated with improved progression-free survival following ICB. Our findings argue for the development of therapies aimed at maintaining the expression of CD226.  
+The activating receptor CD226 is expressed on lymphocytes, monocytes, and platelets and promotes anti-tumor immunity in pre-clinical models. Here, we examined the role of CD226 in the function of tumor-infiltrating lymphocytes (TILs) and resistance to immunotherapy. In murine tumors, a large proportion of CD8+ TILs had decreased surface expression of CD226 and exhibited features of dysfunction, whereas CD226hi TILs were highly functional. This correlation was seen also in TILs isolated from HNSCC patients. Mutation of CD226 at tyrosine 319 (Y319) led to increased CD226 surface expression, enhanced anti-tumor immunity and improved efficacy of immune checkpoint blockade (ICB). Mechanistically, tumor-derived CD155, the ligand for CD226, initiated phosphorylation of Y319 by Src kinases, thereby enabling ubiquitination of CD226 by CBL-B, internalization, and proteasomal degradation. In pre-treatment samples from melanoma patients, CD226+CD8+ T cells correlated with improved progression-free survival following ICB. Our findings argue for the development of therapies aimed at maintaining the expression of CD226.
 
 ---
 
