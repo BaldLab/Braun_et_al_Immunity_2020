@@ -55,5 +55,5 @@ The activating receptor CD226 is expressed on lymphocytes, monocytes, and platel
 
 ## Code Attribution  
 
-This code and analysis were authored by **Dillon Corvino**.  
+This code and analysis were authored by **Dillon Corvino** — [github.com/Eomesodermin](https://github.com/Eomesodermin) · [dilloncorvino.com](https://dilloncorvino.com).  
 
