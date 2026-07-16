@@ -53,6 +53,12 @@ The activating receptor CD226 is expressed on lymphocytes, monocytes, and platel
 
 ---
 
+## Data availability
+
+The processed mouse tumour CD8+ TIL single-cell RNA-seq count matrix is archived on **Zenodo** (open access): **[10.5281/zenodo.21400899](https://doi.org/10.5281/zenodo.21400899)**. Raw sequencing reads are deposited on GEO — see the [published paper's](https://doi.org/10.1016/j.immuni.2020.09.010) data-availability statement for the accession.
+
+---
+
 ## Code Attribution  
 
 This code and analysis were authored by **Dillon Corvino** — [github.com/Eomesodermin](https://github.com/Eomesodermin) · [dilloncorvino.com](https://dilloncorvino.com).  
