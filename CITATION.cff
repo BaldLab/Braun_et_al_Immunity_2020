@@ -6,7 +6,7 @@ authors:
     given-names: Dillon
     orcid: "https://orcid.org/0000-0003-0683-1369"
 type: software
-repository-code: "https://github.com/BaldLab/Braun_et_al_Immunity_2020"
+repository-code: "https://github.com/Eomesodermin/Braun_et_al_Immunity_2020"
 url: "https://dilloncorvino.com"
 preferred-citation:
   type: article
