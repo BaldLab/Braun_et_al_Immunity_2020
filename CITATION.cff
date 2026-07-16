@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the associated paper (below)."
+title: "CD155 on Tumor Cells Drives Resistance to Immunotherapy by I — analysis code"
+authors:
+  - family-names: Corvino
+    given-names: Dillon
+    orcid: "https://orcid.org/0000-0003-0683-1369"
+type: software
+repository-code: "https://github.com/BaldLab/Braun_et_al_Immunity_2020"
+url: "https://dilloncorvino.com"
+preferred-citation:
+  type: article
+  title: "CD155 on Tumor Cells Drives Resistance to Immunotherapy by Inducing the Degradation of the Activating Receptor CD226 in CD8+ T Cells"
+  journal: "Immunity"
+  year: 2020
+  doi: "10.1016/j.immuni.2020.09.010"
+  authors:
+    - family-names: Corvino
+      given-names: Dillon
